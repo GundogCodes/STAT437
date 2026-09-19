@@ -1,0 +1,262 @@
+---
+title: "Assignment1Q2"
+author: "Gunish Sharma"
+date: "2026-09-18"
+output: pdf_document
+---
+## Question 2
+
+### (i) Residual Mean Square
+
+The residual mean square for the fitted model is
+
+\[
+MS_{Res}=783.2559.
+\]
+
+Relevant R output:
+
+```text
+> summary(model)$sigma^2
+[1] 783.2559
+```
+
+### (ii) Multiple Linear Regression Model
+
+The fitted multiple linear regression model is
+
+\[
+\widehat{gamble}
+=
+69.222
+-33.752(sex)
+-0.404(status)
+-2.704(verbal).
+\]
+
+The coefficient estimates were:
+
+```text
+             Estimate Std. Error   t value     Pr(>|t|)
+(Intercept)  69.22165  17.56194   3.94157   0.000293
+sex         -33.75202   9.68393  -3.48536   0.001144
+status       -0.40392   0.32665  -1.23654   0.222971
+verbal       -2.70367   2.67838  -1.00944   0.318410
+```
+
+The coefficient for sex is -33.752. Sex is coded as 0 for males and 1 for females. Holding status and verbal score constant, females are predicted to spend approximately 33.75 units less on gambling than males.
+
+The coefficient for status is -0.404. Holding the other predictors constant, a 1 unit increase in status resulted in an estimated decrease of 0.404 units in gambling expenditure.
+
+The coefficient for verbal score is -2.704. Holding the other predictors constant, a 1 unit increase in verbal score resulted in
+an estimated decrease of 2.704 units in gambling expenditure.
+
+The model has
+
+\[
+R^2=0.2629.
+\]
+
+Therefore, approximately 26.3% of the variation in gambling expenditure is explained by sex, status, and verbal score.
+
+The overall F-test was
+
+\[
+F(3,43)=5.111,\quad p=0.004106.
+\]
+
+Since the p-value is less than 0.05, the overall regression model is statistically significant. This indicates that at least one of the predictors is significantly associated with gambling expenditure.
+
+Sex is statistically significant with a p-value of 0.00114. Status and verbal score are not statistically significant at the 5% significance level.
+
+### (iii) Multicollinearity
+
+The VIF values were:
+
+```text
+     sex   status   verbal
+1.355231 1.867493 1.452163
+```
+
+VIF values below 5. Thus, no evidence of problematic multicollinearity among sex, status & verbal score.
+
+### (iv) Confidence Intervals
+
+The 95% confidence interval for sex is
+
+\[
+(-53.282,-14.223).
+\]
+
+
+The 95% confidence interval for verbal score is
+
+\[
+(-8.105,2.698).
+\]
+
+
+Relevant R output:
+
+```text
+             2.5 %      97.5 %
+sex      -53.281523  -14.222509
+verbal    -8.105134    2.697798
+```
+
+### (v) OLS vs. Robust Regression
+
+The OLS model produced
+
+\[
+RSS_{OLS}=33680.01
+\]
+
+and
+
+\[
+RMSE_{OLS}=26.77.
+\]
+
+The robust regression model produced
+
+\[
+RSS_{Robust}=39792.25
+\]
+
+and
+
+\[
+RMSE_{Robust}=29.10.
+\]
+
+OLS model provides better fit on the observed data
+
+```text
+            RSS      RMSE
+OLS     33680.01  26.76931
+Robust  39792.25  29.09714
+```
+### (vi) Outliers
+
+An OLS model was fitted using gambling expenditure as the response variable and sex and status as predictors.
+
+Externally studentized residuals were calculated and observations with
+
+\[
+|r_i^*|>2
+\]
+
+were considered potential outliers.
+
+The R output identified observation 24:
+
+```text
+> studentRes[abs(studentRes) > 2]
+
+      24
+5.34369
+```
+
+Observation 24 had a studentized residual of
+
+\[
+5.34369,
+\]
+
+which is greater than 2 in absolute value.
+
+The observation was:
+
+```text
+   sex status income verbal gamble
+24   0     27     10      4    156
+```
+
+Therefore, observation 24 is identified as an outlier. Its gambling expenditure of 156 is unusually high compared with the value predicted by the OLS model based on sex and status.
+
+No other observations had an absolute studentized residual greater than 2.
+
+
+# Appendix: R Code
+```{r, echo=TRUE, eval=FALSE}
+# install packages
+
+library(faraway)
+library(car)
+library(MASS)
+
+data(teengamb)
+
+# show data
+head(teengamb)
+str(teengamb)
+
+# Q2 i & ii)
+# define mlr model & fit  to predict
+model <- lm(gamble ~ sex + status + verbal, data = teengamb)
+
+summary(model)
+
+# anova table
+anova(model)
+
+# get residual mean square
+summary(model)$sigma^2
+
+# coefficient table
+coef(summary(model))
+
+# Q2 iii) get multicollinearity
+
+vif(model)
+
+
+# Q2 iv) get 95% confidence intrevals for  B1(sex) & B3(verbal scoree)
+
+confint(model, c("sex","verbal"), level = 0.95)
+
+# Q2 v) OLS vs robust regression
+
+robustModel <- rlm(gamble ~ sex + status + verbal, data = teengamb)
+summary(robustModel)
+
+# compare coefficients of models
+# show
+coef(model)
+coef(robustModel)
+
+# compare rss
+
+olsRSS <- sum(resid(model)^2)
+robustRSS <- sum(resid(robustModel)^2)
+
+# show
+olsRSS
+robustRSS
+
+# compare RMSE 
+olsRMSE <- sqrt(mean(resid(model)^2))
+robustRMSE <- sqrt(mean(resid(robustModel)^2))
+
+# show
+olsRMSE
+robustRMSE
+
+# Q2 vi)
+
+outlierModel <- lm(gamble ~ sex + status, data = teengamb)
+
+summary(outlierModel)
+
+# studentized residules
+studentRes <- rstudent(outlierModel)
+studentRes
+
+# show observations where absol studentized residule > 2
+studentRes[abs(studentRes) > 2]
+
+# display actual observations
+
+teengamb[abs(studentRes) > 2,]
+```
